@@ -125,14 +125,35 @@ html.dark { color-scheme: dark; }
   border-color: #4B5563 !important;
 }
 
-/* Accent bg tones */
-.dark .bg-orange-50   { background-color: rgba(251,146,60,0.15)  !important; }
-.dark .bg-amber-50    { background-color: rgba(251,191,36,0.15)  !important; }
-.dark .bg-yellow-50   { background-color: rgba(253,224,71,0.12)  !important; }
-.dark .bg-indigo-50   { background-color: rgba(129,140,248,0.12) !important; }
-.dark .bg-blue-50     { background-color: rgba(96,165,250,0.1)   !important; }
-.dark .bg-green-50    { background-color: rgba(74,222,128,0.1)   !important; }
-.dark .bg-purple-50   { background-color: rgba(167,139,250,0.1)  !important; }
-.dark .bg-purple-100  { background-color: rgba(167,139,250,0.2)  !important; }
-.dark .bg-red-50      { background-color: rgba(239,68,68,0.1)    !important; }
-.dark .bg-red-100     { background-color: rgba(239,68,68,0.15)   !important; }
+/* Accent button backgrounds — higher opacity so they stand out on dark cards */
+.dark .bg-orange-50   { background-color: rgba(251,146,60,0.22)  !important; }
+.dark .bg-amber-50    { background-color: rgba(251,191,36,0.22)  !important; }
+.dark .bg-yellow-50   { background-color: rgba(253,224,71,0.18)  !important; }
+.dark .bg-indigo-50   { background-color: rgba(129,140,248,0.22) !important; }
+.dark .bg-blue-50     { background-color: rgba(96,165,250,0.22)  !important; }
+.dark .bg-green-50    { background-color: rgba(74,222,128,0.22)  !important; }
+.dark .bg-purple-50   { background-color: rgba(167,139,250,0.22) !important; }
+.dark .bg-purple-100  { background-color: rgba(167,139,250,0.35) !important; }
+.dark .bg-red-50      { background-color: rgba(239,68,68,0.2)    !important; }
+.dark .bg-red-100     { background-color: rgba(239,68,68,0.28)   !important; }
+
+/* Accent borders — more visible in dark mode */
+.dark .border-blue-200   { border-color: rgba(96,165,250,0.5)   !important; }
+.dark .border-green-200  { border-color: rgba(74,222,128,0.5)   !important; }
+.dark .border-purple-200 { border-color: rgba(167,139,250,0.5)  !important; }
+.dark .border-orange-200 { border-color: rgba(251,146,60,0.5)   !important; }
+.dark .border-red-200    { border-color: rgba(239,68,68,0.5)    !important; }
+.dark .border-amber-200  { border-color: rgba(251,191,36,0.5)   !important; }
+.dark .border-indigo-200 { border-color: rgba(129,140,248,0.5)  !important; }
+
+/* Accent text — brighter so it reads clearly on the dark button bg */
+.dark .text-blue-600   { color: #93C5FD !important; }
+.dark .text-green-600  { color: #6EE7B7 !important; }
+.dark .text-green-700  { color: #6EE7B7 !important; }
+.dark .text-purple-700 { color: #C4B5FD !important; }
+.dark .text-purple-800 { color: #DDD6FE !important; }
+.dark .text-orange-600 { color: #FBD38D !important; }
+.dark .text-amber-500  { color: #FCD34D !important; }
+.dark .text-yellow-500 { color: #FDE68A !important; }
+.dark .text-indigo-500 { color: #A5B4FC !important; }
+.dark .text-red-500    { color: #FCA5A5 !important; }
