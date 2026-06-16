@@ -6,19 +6,26 @@ import {
 import useStore from '../../store/useStore.js';
 import {
   todayStr, daysAgoStr, formatDate, formatDateShort,
-  computeStreak, computeLongestStreak, dateStr,
+  computeStreak, computeLongestStreak,
 } from '../../utils/calculations.js';
 
 const RANGES = ['1W', '1M', '3M', 'All'];
 
 export default function Progress() {
-  const { foodEntries, weightLogs, dailyLog, profile } = useStore();
+  const { foodEntries, weightLogs, profile, darkMode } = useStore();
   const [weightRange, setWeightRange] = useState('1M');
-  const [calRange, setCalRange] = useState('1W');
+  const [calRange,    setCalRange]    = useState('1W');
 
   const target = profile?.dailyCalorieTarget || 2000;
 
-  // ---- Daily calorie data ----
+  // Dynamic chart colours based on dark mode
+  const chartAccent = darkMode ? '#7C3AED' : '#1B4332';
+  const gridColor   = darkMode ? '#374151' : '#F3F4F6';
+  const axisColor   = darkMode ? '#6B7280' : '#9CA3AF';
+  const tooltipBg   = darkMode ? '#1F2937' : '#FFFFFF';
+  const tooltipBorder = darkMode ? '#374151' : '#E5E7EB';
+  const tooltipText   = darkMode ? '#F3F4F6' : '#374151';
+
   const calData = useMemo(() => {
     const days = calRange === '1W' ? 7 : 30;
     const result = [];
@@ -31,7 +38,6 @@ export default function Progress() {
     return result;
   }, [foodEntries, calRange]);
 
-  // ---- Weight data ----
   const weightData = useMemo(() => {
     const days = { '1W': 7, '1M': 30, '3M': 90, 'All': null }[weightRange];
     const cutoff = days ? daysAgoStr(days) : null;
@@ -41,7 +47,6 @@ export default function Progress() {
       .map(w => ({ date: w.date, label: formatDate(w.date), weight: w.weightKg }));
   }, [weightLogs, weightRange]);
 
-  // ---- 7-day moving average for weight ----
   const weightWithAvg = useMemo(() => {
     return weightData.map((d, i) => {
       const window = weightData.slice(Math.max(0, i - 6), i + 1);
@@ -50,29 +55,25 @@ export default function Progress() {
     });
   }, [weightData]);
 
-  // ---- Macro data (7 days) ----
   const macroData = useMemo(() => {
     const result = [];
     for (let i = 6; i >= 0; i--) {
       const d = daysAgoStr(i);
       const day = foodEntries.filter(e => e.date === d);
       result.push({
-        date: d,
-        label: formatDateShort(d),
+        date: d, label: formatDateShort(d),
         protein: Math.round(day.reduce((s, e) => s + (e.protein || 0), 0)),
-        carbs: Math.round(day.reduce((s, e) => s + (e.carbs || 0), 0)),
-        fat: Math.round(day.reduce((s, e) => s + (e.fat || 0), 0)),
+        carbs:   Math.round(day.reduce((s, e) => s + (e.carbs   || 0), 0)),
+        fat:     Math.round(day.reduce((s, e) => s + (e.fat     || 0), 0)),
       });
     }
     return result;
   }, [foodEntries]);
 
-  // ---- Streak stats ----
-  const streak = useMemo(() => computeStreak(foodEntries), [foodEntries]);
+  const streak        = useMemo(() => computeStreak(foodEntries),        [foodEntries]);
   const longestStreak = useMemo(() => computeLongestStreak(foodEntries), [foodEntries]);
-  const totalDays = useMemo(() => new Set(foodEntries.map(e => e.date)).size, [foodEntries]);
+  const totalDays     = useMemo(() => new Set(foodEntries.map(e => e.date)).size, [foodEntries]);
 
-  // ---- Weekly stats ----
   const weeklyStats = useMemo(() => {
     const days = [];
     for (let i = 6; i >= 0; i--) days.push(daysAgoStr(i));
@@ -81,13 +82,12 @@ export default function Progress() {
     if (logged === 0) return null;
     return {
       avgCalories: Math.round(week.reduce((s, e) => s + e.calories, 0) / logged),
-      avgProtein: Math.round(week.reduce((s, e) => s + e.protein, 0) / logged),
-      avgCarbs: Math.round(week.reduce((s, e) => s + e.carbs, 0) / logged),
+      avgProtein:  Math.round(week.reduce((s, e) => s + e.protein,  0) / logged),
+      avgCarbs:    Math.round(week.reduce((s, e) => s + e.carbs,    0) / logged),
       daysLogged: logged,
     };
   }, [foodEntries]);
 
-  // ---- Deficit/Surplus ----
   const weekBalance = useMemo(() => {
     const days = [];
     for (let i = 6; i >= 0; i--) days.push(daysAgoStr(i));
@@ -95,22 +95,18 @@ export default function Progress() {
     const loggedDays = new Set(week.map(e => e.date)).size;
     if (!loggedDays) return null;
     const consumed = week.reduce((s, e) => s + e.calories, 0);
-    const budgeted = target * loggedDays;
-    const diff = consumed - budgeted;
+    const diff = consumed - target * loggedDays;
     return { diff, kg: Math.abs(diff) / 7700 };
   }, [foodEntries, target]);
 
-  // ---- Insights ----
   const insights = useMemo(() => {
     const cutoff = daysAgoStr(14);
     const recent = foodEntries.filter(e => e.date >= cutoff);
     const result = [];
-
     const freq = {};
     recent.forEach(e => { freq[e.foodName] = (freq[e.foodName] || 0) + 1; });
     const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
     if (top) result.push(`Most logged food: "${top[0]}" (${top[1]}× in 2 weeks)`);
-
     const dayMap = {};
     recent.forEach(e => {
       const d = new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
@@ -118,7 +114,6 @@ export default function Progress() {
     });
     const topDay = Object.entries(dayMap).sort((a, b) => b[1] - a[1])[0];
     if (topDay) result.push(`Highest calories on ${topDay[0]}s`);
-
     if (result.length === 0) result.push('Keep logging to see personalized insights!');
     return result;
   }, [foodEntries]);
@@ -126,8 +121,9 @@ export default function Progress() {
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-lg text-xs">
-        <p className="font-semibold text-gray-700 mb-1">{label}</p>
+      <div style={{ backgroundColor: tooltipBg, borderColor: tooltipBorder }}
+           className="border rounded-xl px-3 py-2 shadow-lg text-xs">
+        <p style={{ color: tooltipText }} className="font-semibold mb-1">{label}</p>
         {payload.map(p => (
           <p key={p.name} style={{ color: p.color }}>{p.name}: {p.value}</p>
         ))}
@@ -136,28 +132,27 @@ export default function Progress() {
   };
 
   return (
-    <div className="h-screen overflow-y-auto pb-nav bg-gray-50">
-      {/* Header */}
-      <div className="safe-top bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="h-screen overflow-y-auto pb-nav bg-gray-50 dark:bg-gray-900">
+      <div className="safe-top bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-10">
         <div className="px-4 py-3">
-          <h1 className="text-gray-900 font-bold text-xl">Progress</h1>
+          <h1 className="text-gray-900 dark:text-white font-bold text-xl">Progress</h1>
         </div>
       </div>
 
       <div className="px-4 py-4 space-y-4">
         {/* Streak stats */}
         <div className="card overflow-hidden">
-          <div className="flex divide-x divide-gray-100">
-            <StatBox label="Current Streak" value={streak} unit="days" color="text-orange-500" />
-            <StatBox label="Longest Streak" value={longestStreak} unit="days" color="text-blue-500" />
-            <StatBox label="Total Days" value={totalDays} unit="logged" color="text-green-app" />
+          <div className="flex divide-x divide-gray-100 dark:divide-gray-700">
+            <StatBox label="Current Streak"  value={streak}        unit="days"   color="text-orange-500 dark:text-orange-400" />
+            <StatBox label="Longest Streak"  value={longestStreak} unit="days"   color="text-blue-500 dark:text-blue-400" />
+            <StatBox label="Total Days"       value={totalDays}     unit="logged" color="text-green-app dark:text-violet-400" />
           </div>
         </div>
 
         {/* Weight Chart */}
         <div className="card p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-800">Weight</h2>
+            <h2 className="font-semibold text-gray-800 dark:text-gray-100">Weight</h2>
             <RangePicker value={weightRange} onChange={setWeightRange} options={RANGES} />
           </div>
           {weightData.length < 2 ? (
@@ -166,22 +161,21 @@ export default function Progress() {
             <>
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={weightWithAvg} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
-                         domain={['auto', 'auto']} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Line type="monotone" dataKey="weight" stroke="#1B4332" strokeWidth={2}
-                        dot={{ r: 3, fill: '#1B4332' }} name="Weight (kg)" />
+                  <Line type="monotone" dataKey="weight" stroke={chartAccent} strokeWidth={2}
+                        dot={{ r: 3, fill: chartAccent }} name="Weight (kg)" />
                   <Line type="monotone" dataKey="avg" stroke="#F97316" strokeWidth={2}
                         dot={false} strokeDasharray="4 2" name="7-day avg" />
                 </LineChart>
               </ResponsiveContainer>
               <div className="flex gap-4 mt-2">
-                <ChartLegend name="Actual" color="#1B4332" />
+                <ChartLegend name="Actual"    color={chartAccent} />
                 <ChartLegend name="7-day avg" color="#F97316" dashed />
                 {profile?.goalWeight && (
-                  <span className="text-gray-400 text-xs ml-auto">Goal: {profile.goalWeight} kg</span>
+                  <span className="text-gray-400 dark:text-gray-500 text-xs ml-auto">Goal: {profile.goalWeight} kg</span>
                 )}
               </div>
             </>
@@ -191,7 +185,7 @@ export default function Progress() {
         {/* Calorie History */}
         <div className="card p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-800">Calories</h2>
+            <h2 className="font-semibold text-gray-800 dark:text-gray-100">Calories</h2>
             <RangePicker value={calRange} onChange={setCalRange} options={['1W', '1M']} />
           </div>
           {calData.every(d => d.calories === 0) ? (
@@ -199,14 +193,13 @@ export default function Progress() {
           ) : (
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={calData} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <ReferenceLine y={target} stroke="#F97316" strokeDasharray="4 2"
                                label={{ value: 'Target', position: 'insideTopRight', fontSize: 10, fill: '#F97316' }} />
-                <Bar dataKey="calories" name="Calories" radius={[4, 4, 0, 0]}
-                     fill="#1B4332" opacity={0.85} />
+                <Bar dataKey="calories" name="Calories" radius={[4, 4, 0, 0]} fill={chartAccent} opacity={0.85} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -214,26 +207,26 @@ export default function Progress() {
 
         {/* Macro History */}
         <div className="card p-4">
-          <h2 className="font-semibold text-gray-800 mb-3">Macros (7 days)</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Macros (7 days)</h2>
           {macroData.every(d => d.protein + d.carbs + d.fat === 0) ? (
             <EmptyChart label="Log food to see macro breakdowns" />
           ) : (
             <>
               <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={macroData} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: axisColor }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="protein" name="Protein (g)" fill="#3B82F6" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="carbs" name="Carbs (g)" fill="#F97316" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="fat" name="Fat (g)" fill="#EAB308" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="carbs"   name="Carbs (g)"   fill="#F97316" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="fat"     name="Fat (g)"     fill="#EAB308" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               <div className="flex gap-4 mt-2">
                 <ChartLegend name="Protein" color="#3B82F6" />
-                <ChartLegend name="Carbs" color="#F97316" />
-                <ChartLegend name="Fat" color="#EAB308" />
+                <ChartLegend name="Carbs"   color="#F97316" />
+                <ChartLegend name="Fat"     color="#EAB308" />
               </div>
             </>
           )}
@@ -242,12 +235,12 @@ export default function Progress() {
         {/* Weekly Summary */}
         {weeklyStats && (
           <div className="card p-4">
-            <h2 className="font-semibold text-gray-800 mb-3">This Week</h2>
+            <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">This Week</h2>
             <div className="grid grid-cols-2 gap-3">
               <SummaryBox label="Avg Calories" value={weeklyStats.avgCalories} unit="kcal" />
-              <SummaryBox label="Avg Protein" value={weeklyStats.avgProtein} unit="g" />
-              <SummaryBox label="Avg Carbs" value={weeklyStats.avgCarbs} unit="g" />
-              <SummaryBox label="Days Logged" value={`${weeklyStats.daysLogged}/7`} unit="" />
+              <SummaryBox label="Avg Protein"  value={weeklyStats.avgProtein}  unit="g" />
+              <SummaryBox label="Avg Carbs"    value={weeklyStats.avgCarbs}    unit="g" />
+              <SummaryBox label="Days Logged"  value={`${weeklyStats.daysLogged}/7`} unit="" />
             </div>
           </div>
         )}
@@ -255,17 +248,17 @@ export default function Progress() {
         {/* Deficit/Surplus */}
         {weekBalance && (
           <div className="card p-4">
-            <h2 className="font-semibold text-gray-800 mb-3">Weekly Balance</h2>
+            <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Weekly Balance</h2>
             <div className="flex justify-between">
               <div>
-                <p className="text-gray-500 text-sm">{weekBalance.diff < 0 ? 'Deficit' : 'Surplus'}</p>
-                <p className={`text-2xl font-bold ${weekBalance.diff < 0 ? 'text-green-app' : 'text-red-500'}`}>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">{weekBalance.diff < 0 ? 'Deficit' : 'Surplus'}</p>
+                <p className={`text-2xl font-bold ${weekBalance.diff < 0 ? 'text-green-app dark:text-violet-400' : 'text-red-500 dark:text-red-400'}`}>
                   {Math.abs(Math.round(weekBalance.diff))} kcal
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-gray-500 text-sm">Est. weight change</p>
-                <p className={`text-2xl font-bold ${weekBalance.diff < 0 ? 'text-green-app' : 'text-orange-500'}`}>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Est. weight change</p>
+                <p className={`text-2xl font-bold ${weekBalance.diff < 0 ? 'text-green-app dark:text-violet-400' : 'text-orange-500 dark:text-orange-400'}`}>
                   {weekBalance.diff < 0 ? '-' : '+'}{weekBalance.kg.toFixed(2)} kg
                 </p>
               </div>
@@ -277,13 +270,13 @@ export default function Progress() {
         <div className="card p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">💡</span>
-            <h2 className="font-semibold text-gray-800">Insights</h2>
+            <h2 className="font-semibold text-gray-800 dark:text-gray-100">Insights</h2>
           </div>
           <div className="space-y-2">
             {insights.map((insight, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="text-green-app mt-0.5">→</span>
-                <p className="text-gray-600 text-sm">{insight}</p>
+                <span className="text-green-app dark:text-violet-400 mt-0.5">→</span>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">{insight}</p>
               </div>
             ))}
           </div>
@@ -297,17 +290,17 @@ function StatBox({ label, value, unit, color }) {
   return (
     <div className="flex-1 py-4 text-center">
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
-      <p className="text-gray-400 text-xs">{unit}</p>
-      <p className="text-gray-500 text-xs mt-0.5">{label}</p>
+      <p className="text-gray-400 dark:text-gray-500 text-xs">{unit}</p>
+      <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{label}</p>
     </div>
   );
 }
 
 function SummaryBox({ label, value, unit }) {
   return (
-    <div className="bg-gray-50 rounded-xl p-3">
-      <p className="text-gray-800 font-bold">{value}{unit ? ` ${unit}` : ''}</p>
-      <p className="text-gray-400 text-xs mt-0.5">{label}</p>
+    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+      <p className="text-gray-800 dark:text-gray-100 font-bold">{value}{unit ? ` ${unit}` : ''}</p>
+      <p className="text-gray-400 dark:text-gray-500 text-xs mt-0.5">{label}</p>
     </div>
   );
 }
@@ -318,7 +311,9 @@ function RangePicker({ value, onChange, options }) {
       {options.map(opt => (
         <button key={opt} onClick={() => onChange(opt)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  value === opt ? 'bg-green-app text-white' : 'bg-gray-100 text-gray-500'
+                  value === opt
+                    ? 'bg-green-app dark:bg-violet-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                 }`}>
           {opt}
         </button>
@@ -330,7 +325,7 @@ function RangePicker({ value, onChange, options }) {
 function EmptyChart({ label }) {
   return (
     <div className="h-32 flex items-center justify-center">
-      <p className="text-gray-400 text-sm text-center px-4">{label}</p>
+      <p className="text-gray-400 dark:text-gray-500 text-sm text-center px-4">{label}</p>
     </div>
   );
 }
@@ -343,7 +338,7 @@ function ChartLegend({ name, color, dashed }) {
         {dashed && <div className="w-2 h-px" style={{ backgroundColor: color }} />}
         {dashed && <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />}
       </div>
-      <span className="text-gray-500 text-xs">{name}</span>
+      <span className="text-gray-500 dark:text-gray-400 text-xs">{name}</span>
     </div>
   );
 }

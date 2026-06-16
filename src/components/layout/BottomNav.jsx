@@ -12,7 +12,7 @@ export default function BottomNav() {
   const { activeTab, setActiveTab } = useStore();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50"
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50"
          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="flex">
         {tabs.map(({ id, label, icon: Icon }) => (
@@ -20,7 +20,9 @@ export default function BottomNav() {
             key={id}
             onClick={() => setActiveTab(id)}
             className={`flex-1 flex flex-col items-center py-2 gap-0.5 transition-colors ${
-              activeTab === id ? 'text-green-app' : 'text-gray-400'
+              activeTab === id
+                ? 'text-green-app dark:text-violet-400'
+                : 'text-gray-400 dark:text-gray-500'
             }`}
             style={{ minHeight: '56px' }}
           >

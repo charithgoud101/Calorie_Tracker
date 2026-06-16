@@ -9,13 +9,15 @@
   }
 
   body {
-    @apply bg-gray-50;
+    @apply bg-gray-50 dark:bg-gray-900;
     overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
   }
 
   * {
     -webkit-tap-highlight-color: transparent;
+    transition-property: background-color, border-color, color;
+    transition-duration: 150ms;
   }
 
   input, select, textarea {
@@ -58,9 +60,9 @@
   display: none;
 }
 
-/* Card styles */
+/* Card — dark mode handled here so all .card elements adapt automatically */
 .card {
-  @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700;
 }
 
 /* Animated progress ring */
@@ -73,98 +75,12 @@
   @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
 }
 
-/* Reusable field input */
+/* Reusable field input — dark mode included */
 .field {
-  @apply w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-800 bg-white focus:outline-none focus:border-green-app text-base;
+  @apply w-full border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3
+         text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-700
+         focus:outline-none focus:border-green-app dark:focus:border-violet-500
+         placeholder:text-gray-400 dark:placeholder:text-gray-500 text-base;
 }
 
-/* === DARK MODE === */
 html.dark { color-scheme: dark; }
-
-.dark body { background-color: #111827 !important; }
-
-.dark .card {
-  background-color: #1F2937 !important;
-  border-color: #374151 !important;
-  box-shadow: none !important;
-}
-
-/* Backgrounds */
-.dark .bg-white { background-color: #1F2937 !important; }
-.dark .bg-gray-50 { background-color: #111827 !important; }
-.dark .bg-gray-100 { background-color: #374151 !important; }
-
-/* Text */
-.dark .text-gray-900 { color: #F9FAFB !important; }
-.dark .text-gray-800 { color: #F3F4F6 !important; }
-.dark .text-gray-700 { color: #E5E7EB !important; }
-.dark .text-gray-600 { color: #D1D5DB !important; }
-.dark .text-gray-500 { color: #9CA3AF !important; }
-.dark .text-gray-400 { color: #6B7280 !important; }
-.dark .text-gray-300 { color: #4B5563 !important; }
-
-/* Borders */
-.dark .border-gray-50  { border-color: #1F2937 !important; }
-.dark .border-gray-100 { border-color: #374151 !important; }
-.dark .border-gray-200 { border-color: #4B5563 !important; }
-.dark .border-gray-300 { border-color: #6B7280 !important; }
-
-/* Form inputs */
-.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-.dark select,
-.dark textarea {
-  background-color: #374151 !important;
-  color: #F9FAFB !important;
-  border-color: #4B5563 !important;
-}
-.dark input::placeholder,
-.dark textarea::placeholder { color: #6B7280 !important; }
-.dark .field {
-  background-color: #374151 !important;
-  color: #F9FAFB !important;
-  border-color: #4B5563 !important;
-}
-
-/* Primary accent: swap dark-forest-green (#1B4332) → violet in dark mode */
-.dark .bg-green-app  { background-color: #7C3AED !important; }
-.dark .text-green-app { color: #A78BFA !important; }
-.dark .border-green-app { border-color: #7C3AED !important; }
-.dark .focus\:border-green-app:focus { border-color: #7C3AED !important; }
-.dark .bg-green-light { background-color: #6D28D9 !important; }
-.dark .text-green-muted { color: #C4B5FD !important; }
-/* active states that reference green-app */
-.dark .active\:bg-green-100:active { background-color: rgba(124,58,237,0.2) !important; }
-.dark .active\:opacity-90:active  { opacity: 0.85 !important; }
-
-/* Accent button backgrounds — higher opacity so they stand out on dark cards */
-.dark .bg-orange-50   { background-color: rgba(251,146,60,0.22)  !important; }
-.dark .bg-amber-50    { background-color: rgba(251,191,36,0.22)  !important; }
-.dark .bg-yellow-50   { background-color: rgba(253,224,71,0.18)  !important; }
-.dark .bg-indigo-50   { background-color: rgba(129,140,248,0.22) !important; }
-.dark .bg-blue-50     { background-color: rgba(96,165,250,0.22)  !important; }
-.dark .bg-green-50    { background-color: rgba(74,222,128,0.22)  !important; }
-.dark .bg-purple-50   { background-color: rgba(167,139,250,0.22) !important; }
-.dark .bg-purple-100  { background-color: rgba(167,139,250,0.35) !important; }
-.dark .bg-red-50      { background-color: rgba(239,68,68,0.2)    !important; }
-.dark .bg-red-100     { background-color: rgba(239,68,68,0.28)   !important; }
-
-/* Accent borders — more visible in dark mode */
-.dark .border-blue-200   { border-color: rgba(96,165,250,0.5)   !important; }
-.dark .border-green-200  { border-color: rgba(74,222,128,0.5)   !important; }
-.dark .border-purple-200 { border-color: rgba(167,139,250,0.5)  !important; }
-.dark .border-orange-200 { border-color: rgba(251,146,60,0.5)   !important; }
-.dark .border-red-200    { border-color: rgba(239,68,68,0.5)    !important; }
-.dark .border-amber-200  { border-color: rgba(251,191,36,0.5)   !important; }
-.dark .border-indigo-200 { border-color: rgba(129,140,248,0.5)  !important; }
-
-/* Accent text — brighter so it reads clearly on the dark button bg */
-.dark .text-blue-600   { color: #93C5FD !important; }
-.dark .text-green-600  { color: #6EE7B7 !important; }
-.dark .text-green-700  { color: #6EE7B7 !important; }
-.dark .text-purple-700 { color: #C4B5FD !important; }
-.dark .text-purple-800 { color: #DDD6FE !important; }
-.dark .text-orange-600 { color: #FBD38D !important; }
-.dark .text-amber-500  { color: #FCD34D !important; }
-.dark .text-yellow-500 { color: #FDE68A !important; }
-.dark .text-indigo-500 { color: #A5B4FC !important; }
-.dark .text-red-500    { color: #FCA5A5 !important; }
