@@ -125,6 +125,17 @@ html.dark { color-scheme: dark; }
   border-color: #4B5563 !important;
 }
 
+/* Primary accent: swap dark-forest-green (#1B4332) → violet in dark mode */
+.dark .bg-green-app  { background-color: #7C3AED !important; }
+.dark .text-green-app { color: #A78BFA !important; }
+.dark .border-green-app { border-color: #7C3AED !important; }
+.dark .focus\:border-green-app:focus { border-color: #7C3AED !important; }
+.dark .bg-green-light { background-color: #6D28D9 !important; }
+.dark .text-green-muted { color: #C4B5FD !important; }
+/* active states that reference green-app */
+.dark .active\:bg-green-100:active { background-color: rgba(124,58,237,0.2) !important; }
+.dark .active\:opacity-90:active  { opacity: 0.85 !important; }
+
 /* Accent button backgrounds — higher opacity so they stand out on dark cards */
 .dark .bg-orange-50   { background-color: rgba(251,146,60,0.22)  !important; }
 .dark .bg-amber-50    { background-color: rgba(251,191,36,0.22)  !important; }
