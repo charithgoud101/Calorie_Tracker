@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import useStore from '../../store/useStore.js';
-import { todayStr, computeStreak, dateStr } from '../../utils/calculations.js';
+import { todayStr, computeStreak } from '../../utils/calculations.js';
 import LogFood from '../logfood/LogFood.jsx';
 
 const MEAL_TYPES = [
@@ -10,14 +10,25 @@ const MEAL_TYPES = [
   { id: 'Snacks', icon: '🍎', color: 'text-green-600', bg: 'bg-green-50' },
 ];
 
+// Approx kcal burned per step based on body weight
+function stepsToCalories(steps, weightKg = 70) {
+  return Math.round(steps * 0.04 * (weightKg / 70));
+}
+
 export default function Dashboard() {
-  const { profile, foodEntries, dailyLog, weightLogs, setActiveTab, addWater } = useStore();
+  const {
+    profile, foodEntries, dailyLog, weightLogs,
+    darkMode, toggleDarkMode,
+    addWater, addSteps, setSteps,
+  } = useStore();
   const [expandedMeals, setExpandedMeals] = useState(new Set());
   const [logMeal, setLogMeal] = useState(null);
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showWaterModal, setShowWaterModal] = useState(false);
+  const [showStepsModal, setShowStepsModal] = useState(false);
   const [weightInput, setWeightInput] = useState('');
   const [customWater, setCustomWater] = useState('');
+  const [stepsInput, setStepsInput] = useState('');
 
   const today = todayStr();
   const todayEntries = useMemo(() => foodEntries.filter(e => e.date === today), [foodEntries, today]);
@@ -40,10 +51,13 @@ export default function Dashboard() {
     fat: profile?.dailyFatTarget || 65,
     fiber: profile?.dailyFiberTarget || 30,
     water: profile?.dailyWaterTarget || 2500,
+    steps: profile?.dailyStepsTarget || 10000,
   };
 
-  const remaining = targets.calories - totals.calories;
   const waterMl = dailyLog?.waterMl || 0;
+  const steps = dailyLog?.steps || 0;
+  const stepsCals = stepsToCalories(steps, profile?.weightKg || 70);
+  const remaining = targets.calories - totals.calories + stepsCals;
   const streak = useMemo(() => computeStreak(foodEntries), [foodEntries]);
   const latestWeight = useMemo(() => {
     const sorted = [...weightLogs].sort((a, b) => b.date.localeCompare(a.date));
@@ -68,10 +82,6 @@ export default function Dashboard() {
     return mealEntries(meal).reduce((s, e) => s + (e.calories || 0), 0);
   }
 
-  async function handleAddWater(amount) {
-    await addWater(amount);
-  }
-
   async function handleLogWeight() {
     const w = parseFloat(weightInput);
     if (!isNaN(w) && w > 0) {
@@ -81,8 +91,20 @@ export default function Dashboard() {
     }
   }
 
+  async function handleSetSteps() {
+    const s = parseInt(stepsInput);
+    if (!isNaN(s) && s >= 0) {
+      await setSteps(s);
+      setStepsInput('');
+      setShowStepsModal(false);
+    }
+  }
+
   const remainingColor =
     remaining > 200 ? 'text-green-app' : remaining > 0 ? 'text-orange-500' : 'text-red-500';
+
+  // Ring track colour adapts to dark mode
+  const ringTrack = darkMode ? '#374151' : '#F3F4F6';
 
   if (logMeal !== null) {
     return <LogFood defaultMeal={logMeal} onDone={() => setLogMeal(null)} />;
@@ -99,9 +121,28 @@ export default function Dashboard() {
               {profile?.name || 'there'} 👋
             </h1>
           </div>
-          <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full">
-            <span className="text-lg">🔥</span>
-            <span className="text-orange-600 font-bold text-sm">{streak} day{streak !== 1 ? 's' : ''}</span>
+          <div className="flex items-center gap-2">
+            {/* Dark mode toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 active:bg-gray-200 transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? (
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-yellow-400">
+                  <path d="M12 2.25a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM7.5 12a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM18.894 6.166a.75.75 0 0 0-1.06-1.06l-1.591 1.59a.75.75 0 1 0 1.06 1.061l1.591-1.59ZM21.75 12a.75.75 0 0 1-.75.75h-2.25a.75.75 0 0 1 0-1.5H21a.75.75 0 0 1 .75.75ZM17.834 18.894a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 1 0-1.061 1.06l1.59 1.591ZM12 18a.75.75 0 0 1 .75.75V21a.75.75 0 0 1-1.5 0v-2.25A.75.75 0 0 1 12 18ZM7.758 17.303a.75.75 0 0 0-1.061-1.06l-1.591 1.59a.75.75 0 0 0 1.06 1.061l1.591-1.59ZM6 12a.75.75 0 0 1-.75.75H3a.75.75 0 0 1 0-1.5h2.25A.75.75 0 0 1 6 12ZM6.697 7.757a.75.75 0 0 0 1.06-1.06l-1.59-1.591a.75.75 0 0 0-1.061 1.06l1.59 1.591Z"/>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-gray-600">
+                  <path fillRule="evenodd" d="M9.528 1.718a.75.75 0 0 1 .162.819A8.97 8.97 0 0 0 9 6a9 9 0 0 0 9 9 8.97 8.97 0 0 0 3.463-.69.75.75 0 0 1 .981.98 10.503 10.503 0 0 1-9.694 6.46c-5.799 0-10.5-4.7-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 0 1 .818.162Z" clipRule="evenodd"/>
+                </svg>
+              )}
+            </button>
+            {/* Streak */}
+            <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full">
+              <span className="text-lg">🔥</span>
+              <span className="text-orange-600 font-bold text-sm">{streak} day{streak !== 1 ? 's' : ''}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -115,19 +156,60 @@ export default function Dashboard() {
           </p>
           <p className="text-gray-400 text-sm text-center mt-1">kcal</p>
 
-          <div className="flex justify-center gap-6 mt-4 pt-4 border-t border-gray-100">
+          <div className="flex justify-center gap-4 mt-4 pt-4 border-t border-gray-100">
             <CaloriePill label="Goal" value={targets.calories} color="text-gray-700" />
-            <span className="text-gray-300 self-center">−</span>
+            <span className="text-gray-300 self-center text-lg">−</span>
             <CaloriePill label="Eaten" value={Math.round(totals.calories)} color="text-red-500" />
+            {stepsCals > 0 && (
+              <>
+                <span className="text-gray-300 self-center text-lg">+</span>
+                <CaloriePill label="Burned" value={stepsCals} color="text-green-600" />
+              </>
+            )}
           </div>
         </div>
 
-        {/* Macro Rings */}
+        {/* Macro + Fiber Rings */}
         <div className="card p-4">
-          <div className="flex justify-around">
-            <MacroRing label="Protein" current={totals.protein} target={targets.protein} color="#3B82F6" />
-            <MacroRing label="Carbs" current={totals.carbs} target={targets.carbs} color="#F97316" />
-            <MacroRing label="Fat" current={totals.fat} target={targets.fat} color="#EAB308" />
+          <div className="grid grid-cols-4 gap-1">
+            <MacroRing label="Protein" current={totals.protein} target={targets.protein} color="#3B82F6" trackColor={ringTrack} />
+            <MacroRing label="Carbs"   current={totals.carbs}   target={targets.carbs}   color="#F97316" trackColor={ringTrack} />
+            <MacroRing label="Fat"     current={totals.fat}     target={targets.fat}     color="#EAB308" trackColor={ringTrack} />
+            <MacroRing label="Fiber"   current={totals.fiber}   target={targets.fiber}   color="#10B981" trackColor={ringTrack} />
+          </div>
+        </div>
+
+        {/* Steps Card */}
+        <div className="card p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">👟</span>
+              <span className="font-semibold text-gray-800">Steps</span>
+            </div>
+            <div className="text-right">
+              <span className="text-gray-500 text-sm">{steps.toLocaleString()} / {targets.steps.toLocaleString()}</span>
+              {stepsCals > 0 && (
+                <p className="text-green-600 text-xs font-medium">~{stepsCals} kcal burned</p>
+              )}
+            </div>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2.5 mb-3">
+            <div
+              className="bg-green-500 h-2.5 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, (steps / targets.steps) * 100)}%` }}
+            />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {[1000, 5000, 10000].map(amt => (
+              <button key={amt} onClick={() => addSteps(amt)}
+                      className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 rounded-full border border-green-200 active:bg-green-100">
+                +{(amt / 1000).toFixed(0)}k
+              </button>
+            ))}
+            <button onClick={() => setShowStepsModal(true)}
+                    className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 rounded-full border border-green-200 active:bg-green-100">
+              Set Total
+            </button>
           </div>
         </div>
 
@@ -148,7 +230,7 @@ export default function Dashboard() {
           </div>
           <div className="flex gap-2 flex-wrap">
             {[200, 250, 500].map(amt => (
-              <button key={amt} onClick={() => handleAddWater(amt)}
+              <button key={amt} onClick={() => addWater(amt)}
                       className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-full border border-blue-200 active:bg-blue-100">
                 +{amt}ml
               </button>
@@ -161,7 +243,7 @@ export default function Dashboard() {
         </div>
 
         {/* Meal Cards */}
-        {MEAL_TYPES.map(({ id, icon, color, bg }) => {
+        {MEAL_TYPES.map(({ id, icon }) => {
           const expanded = expandedMeals.has(id);
           const entries = mealEntries(id);
           const cal = mealCalories(id);
@@ -171,7 +253,7 @@ export default function Dashboard() {
                 onClick={() => toggleMeal(id)}
                 className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-gray-50"
               >
-                <span className={`text-xl w-7 text-center`}>{icon}</span>
+                <span className="text-xl w-7 text-center">{icon}</span>
                 <span className="font-semibold text-gray-800 flex-1">{id}</span>
                 <span className="text-gray-500 text-sm">{Math.round(cal)} kcal</span>
                 <svg className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
@@ -202,23 +284,6 @@ export default function Dashboard() {
             </div>
           );
         })}
-
-        {/* Fiber */}
-        <div className="card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🌿</span>
-              <span className="font-semibold text-gray-800">Fiber</span>
-            </div>
-            <span className="text-gray-500 text-sm">{totals.fiber.toFixed(1)} / {targets.fiber} g</span>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-2.5">
-            <div
-              className="bg-green-400 h-2.5 rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, (totals.fiber / targets.fiber) * 100)}%` }}
-            />
-          </div>
-        </div>
 
         {/* Weight Card */}
         <div className="card p-4 flex items-center gap-3">
@@ -263,10 +328,27 @@ export default function Dashboard() {
           />
           <button onClick={() => {
             const amt = parseInt(customWater);
-            if (!isNaN(amt) && amt > 0) { handleAddWater(amt); setCustomWater(''); setShowWaterModal(false); }
+            if (!isNaN(amt) && amt > 0) { addWater(amt); setCustomWater(''); setShowWaterModal(false); }
           }}
                   className="w-full py-3 bg-green-app text-white font-semibold rounded-xl">
             Add
+          </button>
+        </Modal>
+      )}
+
+      {/* Steps Modal */}
+      {showStepsModal && (
+        <Modal title="Set Step Count" onClose={() => { setShowStepsModal(false); setStepsInput(''); }}>
+          <p className="text-gray-500 text-sm mb-3">Enter your total steps for today</p>
+          <input
+            type="number" inputMode="numeric" placeholder="e.g. 8500"
+            value={stepsInput} onChange={e => setStepsInput(e.target.value)}
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base mb-4 focus:outline-none focus:border-green-app"
+            autoFocus
+          />
+          <button onClick={handleSetSteps}
+                  className="w-full py-3 bg-green-app text-white font-semibold rounded-xl">
+            Save
           </button>
         </Modal>
       )}
@@ -283,17 +365,17 @@ function CaloriePill({ label, value, color }) {
   );
 }
 
-function MacroRing({ label, current, target, color }) {
+function MacroRing({ label, current, target, color, trackColor }) {
   const progress = Math.min(current / Math.max(target, 1), 1);
-  const radius = 28;
+  const radius = 26;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - progress);
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="relative w-20 h-20">
-        <svg viewBox="0 0 64 64" className="w-20 h-20 -rotate-90">
-          <circle cx="32" cy="32" r={radius} fill="none" stroke="#F3F4F6" strokeWidth="6" />
+      <div className="relative w-16 h-16">
+        <svg viewBox="0 0 64 64" className="w-16 h-16 -rotate-90">
+          <circle cx="32" cy="32" r={radius} fill="none" stroke={trackColor || '#F3F4F6'} strokeWidth="6" />
           <circle
             cx="32" cy="32" r={radius} fill="none"
             stroke={color} strokeWidth="6"
@@ -304,11 +386,11 @@ function MacroRing({ label, current, target, color }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-sm font-bold text-gray-800">{Math.round(current)}g</span>
+          <span className="text-xs font-bold text-gray-800">{Math.round(current)}g</span>
         </div>
       </div>
       <p className="text-gray-500 text-xs">{label}</p>
-      <p className="text-gray-400 text-[10px]">{target}g goal</p>
+      <p className="text-gray-400 text-[10px]">{target}g</p>
     </div>
   );
 }
@@ -322,7 +404,12 @@ function FoodEntryRow({ entry }) {
          onClick={() => setShowDelete(s => !s)}>
       <div className="flex-1 min-w-0">
         <p className="text-gray-800 text-sm font-medium truncate">{entry.foodName}</p>
-        <p className="text-gray-400 text-xs">{entry.servingSize} {entry.servingUnit}</p>
+        <p className="text-gray-400 text-xs">
+          {entry.servingSize} {entry.servingUnit}
+          {(entry.protein > 0 || entry.carbs > 0) && (
+            <span> • P:{Math.round(entry.protein)}g C:{Math.round(entry.carbs)}g F:{Math.round(entry.fat)}g</span>
+          )}
+        </p>
       </div>
       <div className="flex items-center gap-3 ml-2 flex-shrink-0">
         <span className="text-gray-700 text-sm font-semibold tabular-nums">{Math.round(entry.calories)} kcal</span>

@@ -11,6 +11,15 @@ import {
 import { todayStr, generateId } from '../utils/calculations.js';
 
 const useStore = create((set, get) => ({
+  // ---- Dark Mode ----
+  darkMode: localStorage.getItem('darkMode') === 'true',
+
+  toggleDarkMode: () => {
+    const next = !get().darkMode;
+    localStorage.setItem('darkMode', String(next));
+    set({ darkMode: next });
+  },
+
   // ---- Profile ----
   profile: null,
   profileLoaded: false,
@@ -64,6 +73,21 @@ const useStore = create((set, get) => ({
   setWater: async (amount) => {
     const { dailyLog } = get();
     const updated = { ...dailyLog, waterMl: amount };
+    await saveDailyLog(updated);
+    set({ dailyLog: updated });
+  },
+
+  // ---- Steps ----
+  setSteps: async (steps) => {
+    const { dailyLog } = get();
+    const updated = { ...dailyLog, steps: Math.max(0, steps) };
+    await saveDailyLog(updated);
+    set({ dailyLog: updated });
+  },
+
+  addSteps: async (amount) => {
+    const { dailyLog } = get();
+    const updated = { ...dailyLog, steps: (dailyLog.steps || 0) + amount };
     await saveDailyLog(updated);
     set({ dailyLog: updated });
   },

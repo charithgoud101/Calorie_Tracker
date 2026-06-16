@@ -12,7 +12,7 @@ import { todayStr } from './utils/calculations.js';
 export default function App() {
   const {
     profile, profileLoaded,
-    activeTab,
+    activeTab, darkMode,
     loadProfile, loadAllEntries, loadDailyLog, loadWeightLogs, loadRecipes, loadCustomFoods,
   } = useStore();
 
@@ -28,6 +28,14 @@ export default function App() {
       ]);
     })();
   }, []);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   if (!profileLoaded) {
     return (

@@ -77,3 +77,62 @@
 .field {
   @apply w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-800 bg-white focus:outline-none focus:border-green-app text-base;
 }
+
+/* === DARK MODE === */
+html.dark { color-scheme: dark; }
+
+.dark body { background-color: #111827 !important; }
+
+.dark .card {
+  background-color: #1F2937 !important;
+  border-color: #374151 !important;
+  box-shadow: none !important;
+}
+
+/* Backgrounds */
+.dark .bg-white { background-color: #1F2937 !important; }
+.dark .bg-gray-50 { background-color: #111827 !important; }
+.dark .bg-gray-100 { background-color: #374151 !important; }
+
+/* Text */
+.dark .text-gray-900 { color: #F9FAFB !important; }
+.dark .text-gray-800 { color: #F3F4F6 !important; }
+.dark .text-gray-700 { color: #E5E7EB !important; }
+.dark .text-gray-600 { color: #D1D5DB !important; }
+.dark .text-gray-500 { color: #9CA3AF !important; }
+.dark .text-gray-400 { color: #6B7280 !important; }
+.dark .text-gray-300 { color: #4B5563 !important; }
+
+/* Borders */
+.dark .border-gray-50  { border-color: #1F2937 !important; }
+.dark .border-gray-100 { border-color: #374151 !important; }
+.dark .border-gray-200 { border-color: #4B5563 !important; }
+.dark .border-gray-300 { border-color: #6B7280 !important; }
+
+/* Form inputs */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.dark select,
+.dark textarea {
+  background-color: #374151 !important;
+  color: #F9FAFB !important;
+  border-color: #4B5563 !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: #6B7280 !important; }
+.dark .field {
+  background-color: #374151 !important;
+  color: #F9FAFB !important;
+  border-color: #4B5563 !important;
+}
+
+/* Accent bg tones */
+.dark .bg-orange-50   { background-color: rgba(251,146,60,0.15)  !important; }
+.dark .bg-amber-50    { background-color: rgba(251,191,36,0.15)  !important; }
+.dark .bg-yellow-50   { background-color: rgba(253,224,71,0.12)  !important; }
+.dark .bg-indigo-50   { background-color: rgba(129,140,248,0.12) !important; }
+.dark .bg-blue-50     { background-color: rgba(96,165,250,0.1)   !important; }
+.dark .bg-green-50    { background-color: rgba(74,222,128,0.1)   !important; }
+.dark .bg-purple-50   { background-color: rgba(167,139,250,0.1)  !important; }
+.dark .bg-purple-100  { background-color: rgba(167,139,250,0.2)  !important; }
+.dark .bg-red-50      { background-color: rgba(239,68,68,0.1)    !important; }
+.dark .bg-red-100     { background-color: rgba(239,68,68,0.15)   !important; }
